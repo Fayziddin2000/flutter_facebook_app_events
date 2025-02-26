@@ -2,82 +2,63 @@ import Flutter
 import UIKit
 import FBSDKCoreKit
 import FBSDKCoreKit_Basics
-import FBAudienceNetwork
 
 public class SwiftFacebookAppEventsPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "flutter.oddbit.id/facebook_app_events", binaryMessenger: registrar.messenger())
         let instance = SwiftFacebookAppEventsPlugin()
 
-        // Required for FB SDK 9.0, as it does not initialize the SDK automatically any more.
-        // See: https://developers.facebook.com/blog/post/2021/01/19/introducing-facebook-platform-sdk-version-9/
-        // "Removal of Auto Initialization of SDK" section
         ApplicationDelegate.shared.initializeSDK()
 
         registrar.addMethodCallDelegate(instance, channel: channel)
         registrar.addApplicationDelegate(instance)
     }
     
-    /// Connect app delegate with SDK
     public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [AnyHashable : Any] = [:]) -> Bool {
         var options = [UIApplication.LaunchOptionsKey: Any]()
         for (k, value) in launchOptions {
             let key = k as! UIApplication.LaunchOptionsKey
             options[key] = value
         }
-        ApplicationDelegate.shared.application(application,didFinishLaunchingWithOptions: options)
+        ApplicationDelegate.shared.application(application, didFinishLaunchingWithOptions: options)
         return true
     }
     
-    public func application( _ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:] ) -> Bool {
+    public func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         let processed = ApplicationDelegate.shared.application(
             app, open: url,
             sourceApplication: options[UIApplication.OpenURLOptionsKey.sourceApplication] as? String,
             annotation: options[UIApplication.OpenURLOptionsKey.annotation])
-        return processed;
+        return processed
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case "clearUserData":
             handleClearUserData(call, result: result)
-            break
         case "setUserData":
             handleSetUserData(call, result: result)
-            break
         case "clearUserID":
             handleClearUserID(call, result: result)
-            break
         case "flush":
             handleFlush(call, result: result)
-            break
         case "getApplicationId":
             handleGetApplicationId(call, result: result)
-            break
         case "logEvent":
             handleLogEvent(call, result: result)
-            break
         case "logPushNotificationOpen":
             handlePushNotificationOpen(call, result: result)
-            break
         case "setUserID":
             handleSetUserId(call, result: result)
-            break
         case "setAutoLogAppEventsEnabled":
             handleSetAutoLogAppEventsEnabled(call, result: result)
-            break
         case "setDataProcessingOptions":
             handleSetDataProcessingOptions(call, result: result)
-            break
         case "logPurchase":
             handlePurchased(call, result: result)
-            break
         case "getAnonymousId":
             handleHandleGetAnonymousId(call, result: result)
-            break
-        case "setAdvertiserTracking":
-            handleSetAdvertiserTracking(call, result: result)
-            break
+        // "setAdvertiserTracking" metodini o‘chirib tashladik
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -133,7 +114,6 @@ public class SwiftFacebookAppEventsPlugin: NSObject, FlutterPlugin {
         } else {
             AppEvents.shared.logEvent(AppEvents.Name(eventName), parameters: parameters)
         }
-
         result(nil)
     }
 
@@ -167,7 +147,6 @@ public class SwiftFacebookAppEventsPlugin: NSObject, FlutterPlugin {
         let country = arguments["country"] as? Int32 ?? 0
 
         Settings.shared.setDataProcessingOptions(modes, country: country, state: state)
-
         result(nil)
     }
 
@@ -177,17 +156,6 @@ public class SwiftFacebookAppEventsPlugin: NSObject, FlutterPlugin {
         let currency = arguments["currency"] as! String
         let parameters = arguments["parameters"] as? [AppEvents.ParameterName: Any] ?? [AppEvents.ParameterName: Any]()
         AppEvents.shared.logPurchase(amount: amount, currency: currency, parameters: parameters)
-
-        result(nil)
-    }
-
-    private func handleSetAdvertiserTracking(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        let arguments = call.arguments as? [String: Any] ?? [String: Any]()
-        let enabled = arguments["enabled"] as! Bool
-        let collectId = arguments["collectId"] as! Bool
-        FBAdSettings.setAdvertiserTrackingEnabled(enabled)
-        Settings.shared.isAdvertiserTrackingEnabled = enabled
-        Settings.shared.isAdvertiserIDCollectionEnabled = collectId
         result(nil)
     }
 }
